@@ -17,6 +17,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import Brand from "../components/Brand";
 import { Eyebrow, Field } from "../components/UI";
+import { signupUser } from "../api/auth.api";
 
 export function Signup() {
   const navigate = useNavigate();
@@ -24,13 +25,14 @@ export function Signup() {
 
   const [role, setRole] = useState("seller"); // "seller" or "buyer"
   const [showPassword, setShowPassword] = useState(false);
+  // const [loading , setLoading]=useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     phone: "",
     businessName: "",
-    city: "Patna"
+    city: ""
   });
   const [error, setError] = useState("");
 
@@ -39,29 +41,47 @@ export function Signup() {
     if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    const res = signup({
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      phone: form.phone,
-      businessName: form.businessName,
-      city: form.city,
-      role: role
-    });
+    try {
+      // setLoading(true);
 
-    if (!res.success) {
-      setError(res.error);
-      return;
+      const userData = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        phone: form.phone.trim(),
+        businessName: form.businessName.trim(),
+        city: form.city.trim(),
+        role,
+      };
+
+      // Send signup data to your Express backend using Axios
+      const res = await signupUser(userData);
+
+      console.log("Signup successful:", res);
+
+      // Navigate only after the API request succeeds
+      const target =
+        role === "buyer"
+          ? "/buyer/dashboard"
+          : "/seller/dashboard";
+
+      navigate(target, { replace: true });
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Signup failed. Please try again.";
+
+      setError(message);
+    } finally {
+      // setLoading(false);
     }
-
-    const target = role === "buyer" ? "/buyer/dashboard" : "/seller/dashboard";
-    navigate(target);
   };
-
   return (
     <div className="auth">
       <aside className="auth-story">
